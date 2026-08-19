@@ -1,3 +1,7 @@
+//Jorge Martinez Cambara
+// 19/08/2026
+//Utiliza compose para el visual usando esta tecnologia en ves de xml.
+//https://github.com/Pachen-glitch/MovilesRepJa
 package dev.jamc.laboratorioactivitycompose
 
 import android.os.Bundle
