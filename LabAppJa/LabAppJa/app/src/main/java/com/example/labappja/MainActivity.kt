@@ -1,6 +1,7 @@
 package com.example.labappja
 //Es un programa hecho con Kotlin COmpose
 //Que utiliza objetos como Toast, Intent, Action
+//https://github.com/Pachen-glitch/MovilesRepJa
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
