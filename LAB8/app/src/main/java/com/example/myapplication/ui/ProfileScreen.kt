@@ -1,6 +1,4 @@
-package com.example.myapplication
-
-
+package com.example.myapplication.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,19 +25,12 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
-    onLogout: () -> Unit
-) {
+fun ProfileScreen(onLogout: () -> Unit) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("Profile")
-                }
-            )
+            TopAppBar(title = { Text("Profile") })
         }
     ) { innerPadding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -71,9 +62,7 @@ fun ProfileScreen(
                 value = "25556"
             )
 
-            OutlinedButton(
-                onClick = onLogout
-            ) {
+            OutlinedButton(onClick = onLogout) {
                 Text("Cerrar sesión")
             }
         }
@@ -81,10 +70,7 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileRow(
-    label: String,
-    value: String
-) {
+private fun ProfileRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

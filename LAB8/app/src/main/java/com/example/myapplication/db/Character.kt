@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.db
 
 data class Character(
     val id: Int,

@@ -1,25 +1,22 @@
-package com.example.myapplication
+package com.example.myapplication.ui
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
-import kotlinx.serialization.Serializable
-import androidx.navigation.compose.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.rememberNavController
+import kotlinx.serialization.Serializable
 
 @Serializable
 object Login
 
-// Grupo de Characters
 @Serializable
 object CharactersGraph
 
@@ -27,11 +24,10 @@ object CharactersGraph
 object Characters
 
 @Serializable
-data class CharacterDetails(
+data class CharacterDetailsRoute(
     val characterId: Int
 )
 
-// Grupo de Locations
 @Serializable
 object LocationsGraph
 
@@ -39,38 +35,28 @@ object LocationsGraph
 object Locations
 
 @Serializable
-data class LocationDetails(
+data class LocationDetailsRoute(
     val locationId: Int
 )
 
-// Profile no necesita su propio graph
 @Serializable
 object Profile
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    val currentBackStackEntry by
-    navController.currentBackStackEntryAsState()
-
-    val currentDestination =
-        currentBackStackEntry?.destination
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = currentBackStackEntry?.destination
 
     val selectedTab = when {
-        currentDestination
-            ?.hierarchy
-            ?.any { destination ->
-                destination.hasRoute<CharactersGraph>()
-            } == true -> BottomTab.CHARACTERS
+        currentDestination?.hierarchy?.any { it.hasRoute<CharactersGraph>() } == true ->
+            BottomTab.CHARACTERS
 
-        currentDestination
-            ?.hierarchy
-            ?.any { destination ->
-                destination.hasRoute<LocationsGraph>()
-            } == true -> BottomTab.LOCATIONS
+        currentDestination?.hierarchy?.any { it.hasRoute<LocationsGraph>() } == true ->
+            BottomTab.LOCATIONS
 
-        currentDestination
-            ?.hasRoute<Profile>() == true ->
+        currentDestination?.hasRoute<Profile>() == true ->
             BottomTab.PROFILE
 
         else -> null
@@ -86,7 +72,6 @@ fun AppNavigation() {
             if (showBottomBar && selectedTab != null) {
                 AppBottomNavigationBar(
                     selectedTab = selectedTab,
-
                     onCharactersClick = {
                         if (selectedTab != BottomTab.CHARACTERS) {
                             navController.navigate(CharactersGraph) {
@@ -94,7 +79,6 @@ fun AppNavigation() {
                             }
                         }
                     },
-
                     onLocationsClick = {
                         if (selectedTab != BottomTab.LOCATIONS) {
                             navController.navigate(LocationsGraph) {
@@ -102,7 +86,6 @@ fun AppNavigation() {
                             }
                         }
                     },
-
                     onProfileClick = {
                         if (selectedTab != BottomTab.PROFILE) {
                             navController.navigate(Profile) {
@@ -114,7 +97,6 @@ fun AppNavigation() {
             }
         }
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
             startDestination = Login,
@@ -124,66 +106,44 @@ fun AppNavigation() {
                 LoginScreen(
                     onStart = {
                         navController.navigate(CharactersGraph) {
-                            popUpTo<Login> {
-                                inclusive = true
-                            }
+                            popUpTo<Login> { inclusive = true }
                         }
                     }
                 )
             }
 
-            navigation<CharactersGraph>(
-                startDestination = Characters
-            ) {
+            navigation<CharactersGraph>(startDestination = Characters) {
                 composable<Characters> {
                     CharactersScreen(
                         onCharacterClick = { characterId ->
                             navController.navigate(
-                                CharacterDetails(
-                                    characterId = characterId
-                                )
+                                CharacterDetailsRoute(characterId = characterId)
                             )
                         }
                     )
                 }
 
-                composable<CharacterDetails> { backStackEntry ->
-                    val details =
-                        backStackEntry.toRoute<CharacterDetails>()
-
+                composable<CharacterDetailsRoute> {
                     CharacterDetailsScreen(
-                        characterId = details.characterId,
-                        onBack = {
-                            navController.navigateUp()
-                        }
+                        onBack = { navController.navigateUp() }
                     )
                 }
             }
 
-            navigation<LocationsGraph>(
-                startDestination = Locations
-            ) {
+            navigation<LocationsGraph>(startDestination = Locations) {
                 composable<Locations> {
                     LocationsScreen(
                         onLocationClick = { locationId ->
                             navController.navigate(
-                                LocationDetails(
-                                    locationId = locationId
-                                )
+                                LocationDetailsRoute(locationId = locationId)
                             )
                         }
                     )
                 }
 
-                composable<LocationDetails> { backStackEntry ->
-                    val details =
-                        backStackEntry.toRoute<LocationDetails>()
-
+                composable<LocationDetailsRoute> {
                     LocationDetailsScreen(
-                        locationId = details.locationId,
-                        onBack = {
-                            navController.navigateUp()
-                        }
+                        onBack = { navController.navigateUp() }
                     )
                 }
             }
@@ -192,9 +152,7 @@ fun AppNavigation() {
                 ProfileScreen(
                     onLogout = {
                         navController.navigate(Login) {
-                            popUpTo(navController.graph.id) {
-                                inclusive = true
-                            }
+                            popUpTo(navController.graph.id) { inclusive = true }
                         }
                     }
                 )

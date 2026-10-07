@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Face
@@ -24,7 +24,6 @@ fun AppBottomNavigationBar(
     onProfileClick: () -> Unit
 ) {
     NavigationBar {
-
         NavigationBarItem(
             selected = selectedTab == BottomTab.CHARACTERS,
             onClick = onCharactersClick,
@@ -34,9 +33,7 @@ fun AppBottomNavigationBar(
                     contentDescription = "Characters"
                 )
             },
-            label = {
-                Text("Characters")
-            }
+            label = { Text("Characters") }
         )
 
         NavigationBarItem(
@@ -48,9 +45,7 @@ fun AppBottomNavigationBar(
                     contentDescription = "Locations"
                 )
             },
-            label = {
-                Text("Locations")
-            }
+            label = { Text("Locations") }
         )
 
         NavigationBarItem(
@@ -62,9 +57,7 @@ fun AppBottomNavigationBar(
                     contentDescription = "Profile"
                 )
             },
-            label = {
-                Text("Profile")
-            }
+            label = { Text("Profile") }
         )
     }
 }
