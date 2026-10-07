@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.db
 
 class CharacterDb {
     private val characters: List<Character> = listOf(
@@ -24,11 +24,7 @@ class CharacterDb {
         Character(20, "Ants in my Eyes Johnson", "unknown", "Human", "Male", "https://rickandmortyapi.com/api/character/avatar/20.jpeg")
     )
 
-    fun getAllCharacters(): List<Character> {
-        return characters
-    }
+    fun getAllCharacters(): List<Character> = characters
 
-    fun getCharacterById(id: Int): Character {
-        return characters.first { it.id == id }
-    }
+    fun getCharacterById(id: Int): Character = characters.first { it.id == id }
 }

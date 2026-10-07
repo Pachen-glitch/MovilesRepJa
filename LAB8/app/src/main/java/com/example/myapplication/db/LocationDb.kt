@@ -1,6 +1,4 @@
-package com.example.myapplication
-
-// import .....Location
+package com.example.myapplication.db
 
 class LocationDb {
     private val locations: List<Location> = listOf(
@@ -26,11 +24,7 @@ class LocationDb {
         Location(20, "Earth (Replacement Dimension)", "Planet", "Replacement Dimension")
     )
 
-    fun getAllLocations(): List<Location> {
-        return locations
-    }
+    fun getAllLocations(): List<Location> = locations
 
-    fun getLocationById(id: Int): Location {
-        return locations.first { it.id == id }
-    }
+    fun getLocationById(id: Int): Location = locations.first { it.id == id }
 }
