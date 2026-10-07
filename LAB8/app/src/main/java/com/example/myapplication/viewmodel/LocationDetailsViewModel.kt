@@ -40,6 +40,9 @@ class LocationDetailsViewModel(
             _uiState.value = LocationDetailsUiState(isLoading = true)
 
             delay(2_000)
+            if (_uiState.value.hasError) {
+                return@launch
+            }
 
             _uiState.value = LocationDetailsUiState(
                 isLoading = false,

@@ -40,6 +40,9 @@ class CharacterDetailsViewModel(
             _uiState.value = CharacterDetailsUiState(isLoading = true)
 
             delay(2_000)
+            if (_uiState.value.hasError) {
+                return@launch
+            }
 
             _uiState.value = CharacterDetailsUiState(
                 isLoading = false,
