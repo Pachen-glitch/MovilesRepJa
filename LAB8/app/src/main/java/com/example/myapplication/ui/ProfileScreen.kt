@@ -25,12 +25,20 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onLogout: () -> Unit) {
+fun ProfileScreen(
+    userName: String,
+    onLogout: () -> Unit
+) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Profile") })
+            TopAppBar(
+                title = {
+                    Text("Profile")
+                }
+            )
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -54,15 +62,17 @@ fun ProfileScreen(onLogout: () -> Unit) {
 
             ProfileRow(
                 label = "Nombre:",
-                value = "Jorge Antonio Martínez Cambara"
+                value = userName
             )
 
             ProfileRow(
-                label = "Carné: ",
+                label = "Carné:",
                 value = "25556"
             )
 
-            OutlinedButton(onClick = onLogout) {
+            OutlinedButton(
+                onClick = onLogout
+            ) {
                 Text("Cerrar sesión")
             }
         }
@@ -70,7 +80,10 @@ fun ProfileScreen(onLogout: () -> Unit) {
 }
 
 @Composable
-private fun ProfileRow(label: String, value: String) {
+private fun ProfileRow(
+    label: String,
+    value: String
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

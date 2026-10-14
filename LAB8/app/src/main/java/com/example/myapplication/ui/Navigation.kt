@@ -3,8 +3,11 @@ package com.example.myapplication.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
@@ -12,7 +15,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.myapplication.viewmodel.SessionViewModel
 import kotlinx.serialization.Serializable
+
+@Serializable
+object SessionCheck
 
 @Serializable
 object Login
@@ -43,20 +50,35 @@ data class LocationDetailsRoute(
 object Profile
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    sessionViewModel: SessionViewModel = viewModel()
+) {
     val navController = rememberNavController()
 
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = currentBackStackEntry?.destination
+    val sessionUiState by sessionViewModel.uiState
+        .collectAsStateWithLifecycle()
+
+    val currentBackStackEntry by
+    navController.currentBackStackEntryAsState()
+
+    val currentDestination =
+        currentBackStackEntry?.destination
 
     val selectedTab = when {
-        currentDestination?.hierarchy?.any { it.hasRoute<CharactersGraph>() } == true ->
-            BottomTab.CHARACTERS
+        currentDestination
+            ?.hierarchy
+            ?.any { destination ->
+                destination.hasRoute<CharactersGraph>()
+            } == true -> BottomTab.CHARACTERS
 
-        currentDestination?.hierarchy?.any { it.hasRoute<LocationsGraph>() } == true ->
-            BottomTab.LOCATIONS
+        currentDestination
+            ?.hierarchy
+            ?.any { destination ->
+                destination.hasRoute<LocationsGraph>()
+            } == true -> BottomTab.LOCATIONS
 
-        currentDestination?.hasRoute<Profile>() == true ->
+        currentDestination
+            ?.hasRoute<Profile>() == true ->
             BottomTab.PROFILE
 
         else -> null
@@ -72,6 +94,7 @@ fun AppNavigation() {
             if (showBottomBar && selectedTab != null) {
                 AppBottomNavigationBar(
                     selectedTab = selectedTab,
+
                     onCharactersClick = {
                         if (selectedTab != BottomTab.CHARACTERS) {
                             navController.navigate(CharactersGraph) {
@@ -79,6 +102,7 @@ fun AppNavigation() {
                             }
                         }
                     },
+
                     onLocationsClick = {
                         if (selectedTab != BottomTab.LOCATIONS) {
                             navController.navigate(LocationsGraph) {
@@ -86,6 +110,7 @@ fun AppNavigation() {
                             }
                         }
                     },
+
                     onProfileClick = {
                         if (selectedTab != BottomTab.PROFILE) {
                             navController.navigate(Profile) {
@@ -97,27 +122,70 @@ fun AppNavigation() {
             }
         }
     ) { innerPadding ->
+
         NavHost(
             navController = navController,
-            startDestination = Login,
+            startDestination = SessionCheck,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable<SessionCheck> {
+                SessionCheckScreen()
+
+                LaunchedEffect(
+                    sessionUiState.isChecking,
+                    sessionUiState.userName
+                ) {
+                    if (!sessionUiState.isChecking) {
+                        if (sessionUiState.userName.isNullOrBlank()) {
+                            navController.navigate(Login) {
+                                popUpTo<SessionCheck> {
+                                    inclusive = true
+                                }
+
+                                launchSingleTop = true
+                            }
+                        } else {
+                            navController.navigate(CharactersGraph) {
+                                popUpTo<SessionCheck> {
+                                    inclusive = true
+                                }
+
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                }
+            }
+
             composable<Login> {
                 LoginScreen(
-                    onStart = {
-                        navController.navigate(CharactersGraph) {
-                            popUpTo<Login> { inclusive = true }
-                        }
+                    onLogin = { name ->
+                        sessionViewModel.login(
+                            name = name,
+                            onSuccess = {
+                                navController.navigate(CharactersGraph) {
+                                    popUpTo<Login> {
+                                        inclusive = true
+                                    }
+
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
                     }
                 )
             }
 
-            navigation<CharactersGraph>(startDestination = Characters) {
+            navigation<CharactersGraph>(
+                startDestination = Characters
+            ) {
                 composable<Characters> {
                     CharactersScreen(
                         onCharacterClick = { characterId ->
                             navController.navigate(
-                                CharacterDetailsRoute(characterId = characterId)
+                                CharacterDetailsRoute(
+                                    characterId = characterId
+                                )
                             )
                         }
                     )
@@ -125,17 +193,23 @@ fun AppNavigation() {
 
                 composable<CharacterDetailsRoute> {
                     CharacterDetailsScreen(
-                        onBack = { navController.navigateUp() }
+                        onBack = {
+                            navController.navigateUp()
+                        }
                     )
                 }
             }
 
-            navigation<LocationsGraph>(startDestination = Locations) {
+            navigation<LocationsGraph>(
+                startDestination = Locations
+            ) {
                 composable<Locations> {
                     LocationsScreen(
                         onLocationClick = { locationId ->
                             navController.navigate(
-                                LocationDetailsRoute(locationId = locationId)
+                                LocationDetailsRoute(
+                                    locationId = locationId
+                                )
                             )
                         }
                     )
@@ -143,17 +217,28 @@ fun AppNavigation() {
 
                 composable<LocationDetailsRoute> {
                     LocationDetailsScreen(
-                        onBack = { navController.navigateUp() }
+                        onBack = {
+                            navController.navigateUp()
+                        }
                     )
                 }
             }
 
             composable<Profile> {
                 ProfileScreen(
+                    userName = sessionUiState.userName.orEmpty(),
                     onLogout = {
-                        navController.navigate(Login) {
-                            popUpTo(navController.graph.id) { inclusive = true }
-                        }
+                        sessionViewModel.logout(
+                            onSuccess = {
+                                navController.navigate(Login) {
+                                    popUpTo<CharactersGraph> {
+                                        inclusive = true
+                                    }
+
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
                     }
                 )
             }
