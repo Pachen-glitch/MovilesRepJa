@@ -1,53 +1,108 @@
 package com.example.myapplication.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.local.AppDatabase
+import com.example.myapplication.data.local.toModel
 import com.example.myapplication.db.Character
-import com.example.myapplication.db.CharacterDb
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class CharactersUiState(
     val isLoading: Boolean = true,
     val data: List<Character> = emptyList(),
-    val hasError: Boolean = false
+    val hasError: Boolean = false,
+    val showFavoritesOnly: Boolean = false
 )
 
-class CharactersViewModel : ViewModel() {
+class CharactersViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    private val characterDb = CharacterDb()
+    private val characterDao =
+        AppDatabase.getDatabase(application).characterDao()
 
     private val _uiState = MutableStateFlow(CharactersUiState())
     val uiState: StateFlow<CharactersUiState> = _uiState.asStateFlow()
 
+    private var allCharacters: List<Character> = emptyList()
+
     init {
-        loadCharacters()
+        observeCharacters()
     }
 
-    fun loadCharacters() {
+    private fun observeCharacters() {
         viewModelScope.launch {
-            _uiState.value = CharactersUiState(isLoading = true)
+            characterDao.getAllCharacters()
+                .catch {
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            hasError = true
+                        )
+                    }
+                }
+                .collect { entities ->
+                    allCharacters = entities.map { it.toModel() }
+                    applyFilter()
+                }
+        }
+    }
 
-            delay(4_000)
-            if (_uiState.value.hasError) {
-                return@launch
-            }
+    private fun applyFilter() {
+        val showFavoritesOnly = _uiState.value.showFavoritesOnly
+        val filtered = if (showFavoritesOnly) {
+            allCharacters.filter { it.isFavorite }
+        } else {
+            allCharacters
+        }
 
-            _uiState.value = CharactersUiState(
+        _uiState.update { current ->
+            current.copy(
                 isLoading = false,
-                data = characterDb.getAllCharacters(),
+                data = filtered,
                 hasError = false
             )
         }
     }
 
+    fun toggleFavoritesFilter() {
+        _uiState.update { current ->
+            current.copy(showFavoritesOnly = !current.showFavoritesOnly)
+        }
+        applyFilter()
+    }
+
+    fun toggleFavorite(character: Character) {
+        viewModelScope.launch {
+            characterDao.updateFavorite(
+                characterId = character.id,
+                isFavorite = !character.isFavorite
+            )
+        }
+    }
+
+    fun loadCharacters() {
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                hasError = false
+            )
+        }
+        applyFilter()
+    }
+
     fun showError() {
-        _uiState.value = _uiState.value.copy(
-            isLoading = false,
-            hasError = true
-        )
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                hasError = true
+            )
+        }
     }
 }

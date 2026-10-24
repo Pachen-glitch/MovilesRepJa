@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import com.example.myapplication.R
 
 @Composable
 fun LoginScreen(
+    isSyncing: Boolean,
     onLogin: (String) -> Unit
 ) {
     var name by rememberSaveable {
@@ -47,31 +50,38 @@ fun LoginScreen(
             contentScale = ContentScale.Fit
         )
 
-        Spacer(
-            modifier = Modifier.height(24.dp)
-        )
+        Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
             value = name,
             onValueChange = { newName ->
                 name = newName
             },
-            label = {
-                Text("Nombre")
-            },
+            label = { Text("Nombre") },
             singleLine = true,
+            enabled = !isSyncing,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(
-            modifier = Modifier.height(16.dp)
-        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isSyncing) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            Text(
+                text = "Sincronizando datos...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {
-                onLogin(name)
-            },
-            enabled = name.isNotBlank(),
+            onClick = { onLogin(name) },
+            enabled = name.isNotBlank() && !isSyncing,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Iniciar sesión")

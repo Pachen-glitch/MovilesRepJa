@@ -159,6 +159,7 @@ fun AppNavigation(
 
             composable<Login> {
                 LoginScreen(
+                    isSyncing = sessionUiState.isSyncing,
                     onLogin = { name ->
                         sessionViewModel.login(
                             name = name,
@@ -231,7 +232,7 @@ fun AppNavigation(
                         sessionViewModel.logout(
                             onSuccess = {
                                 navController.navigate(Login) {
-                                    popUpTo<CharactersGraph> {
+                                    popUpTo(navController.graph.id) {
                                         inclusive = true
                                     }
 

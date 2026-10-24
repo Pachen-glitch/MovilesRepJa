@@ -1,6 +1,7 @@
 package com.example.myapplication.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,8 +11,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,7 +46,25 @@ fun CharactersScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Characters") })
+            TopAppBar(
+                title = { Text("Characters") },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleFavoritesFilter() }) {
+                        Icon(
+                            imageVector = if (uiState.showFavoritesOnly) {
+                                Icons.Default.FilterAlt
+                            } else {
+                                Icons.Default.FilterAltOff
+                            },
+                            contentDescription = if (uiState.showFavoritesOnly) {
+                                "Mostrar todos"
+                            } else {
+                                "Mostrar favoritos"
+                            }
+                        )
+                    }
+                }
+            )
         }
     ) { innerPadding ->
         when {
@@ -59,6 +85,21 @@ fun CharactersScreen(
                     message = "Error al obtener listado de personajes",
                     onRetry = { viewModel.loadCharacters() }
                 )
+            }
+
+            uiState.showFavoritesOnly && uiState.data.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No hay personajes favoritos.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             else -> {
@@ -99,6 +140,28 @@ fun CharactersScreen(
                                     text = "${character.species} - ${character.status}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            IconButton(
+                                onClick = { viewModel.toggleFavorite(character) }
+                            ) {
+                                Icon(
+                                    imageVector = if (character.isFavorite) {
+                                        Icons.Default.Favorite
+                                    } else {
+                                        Icons.Default.FavoriteBorder
+                                    },
+                                    contentDescription = if (character.isFavorite) {
+                                        "Quitar de favoritos"
+                                    } else {
+                                        "Agregar a favoritos"
+                                    },
+                                    tint = if (character.isFavorite) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
                             }
                         }

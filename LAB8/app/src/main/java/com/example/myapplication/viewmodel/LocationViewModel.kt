@@ -1,13 +1,16 @@
 package com.example.myapplication.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.local.AppDatabase
+import com.example.myapplication.data.local.toModel
 import com.example.myapplication.db.Location
-import com.example.myapplication.db.LocationDb
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class LocationUiState(
@@ -16,38 +19,58 @@ data class LocationUiState(
     val hasError: Boolean = false
 )
 
-class LocationViewModel : ViewModel() {
+class LocationViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
-    private val locationDb = LocationDb()
+    private val locationDao =
+        AppDatabase.getDatabase(application).locationDao()
 
     private val _uiState = MutableStateFlow(LocationUiState())
     val uiState: StateFlow<LocationUiState> = _uiState.asStateFlow()
 
     init {
-        loadLocations()
+        observeLocations()
+    }
+
+    private fun observeLocations() {
+        viewModelScope.launch {
+            locationDao.getAllLocations()
+                .catch {
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            hasError = true
+                        )
+                    }
+                }
+                .collect { entities ->
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            data = entities.map { it.toModel() },
+                            hasError = false
+                        )
+                    }
+                }
+        }
     }
 
     fun loadLocations() {
-        viewModelScope.launch {
-            _uiState.value = LocationUiState(isLoading = true)
-
-            delay(4_000)
-            if (_uiState.value.hasError) {
-                return@launch
-            }
-
-            _uiState.value = LocationUiState(
+        _uiState.update {
+            it.copy(
                 isLoading = false,
-                data = locationDb.getAllLocations(),
                 hasError = false
             )
         }
     }
 
     fun showError() {
-        _uiState.value = _uiState.value.copy(
-            isLoading = false,
-            hasError = true
-        )
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                hasError = true
+            )
+        }
     }
 }
