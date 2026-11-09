@@ -12,11 +12,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,12 +36,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.myapplication.viewmodel.CharacterListFilter
 import com.example.myapplication.viewmodel.CharactersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharactersScreen(
     onCharacterClick: (Int) -> Unit,
+    onCreateCharacter: () -> Unit,
     viewModel: CharactersViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,20 +55,24 @@ fun CharactersScreen(
                 actions = {
                     IconButton(onClick = { viewModel.toggleFavoritesFilter() }) {
                         Icon(
-                            imageVector = if (uiState.showFavoritesOnly) {
+                            imageVector = if (uiState.listFilter == CharacterListFilter.FAVORITES) {
                                 Icons.Default.FilterAlt
                             } else {
                                 Icons.Default.FilterAltOff
                             },
-                            contentDescription = if (uiState.showFavoritesOnly) {
-                                "Mostrar todos"
-                            } else {
-                                "Mostrar favoritos"
-                            }
+                            contentDescription = "Filtrar favoritos"
                         )
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateCharacter) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Crear personaje"
+                )
+            }
         }
     ) { innerPadding ->
         when {
@@ -87,7 +95,8 @@ fun CharactersScreen(
                 )
             }
 
-            uiState.showFavoritesOnly && uiState.data.isEmpty() -> {
+            uiState.listFilter == CharacterListFilter.FAVORITES &&
+                    uiState.data.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -152,11 +161,7 @@ fun CharactersScreen(
                                     } else {
                                         Icons.Default.FavoriteBorder
                                     },
-                                    contentDescription = if (character.isFavorite) {
-                                        "Quitar de favoritos"
-                                    } else {
-                                        "Agregar a favoritos"
-                                    },
+                                    contentDescription = "Favorito",
                                     tint = if (character.isFavorite) {
                                         MaterialTheme.colorScheme.primary
                                     } else {

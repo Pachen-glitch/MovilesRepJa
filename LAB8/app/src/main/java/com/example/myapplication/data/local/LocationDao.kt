@@ -18,6 +18,18 @@ interface LocationDao {
     @Query("SELECT * FROM locations WHERE id = :id LIMIT 1")
     fun getLocationById(id: Int): Flow<LocationEntity?>
 
+    @Query(
+        """
+        UPDATE locations
+        SET isFavorite = :isFavorite
+        WHERE id = :locationId
+        """
+    )
+    suspend fun updateFavorite(
+        locationId: Int,
+        isFavorite: Boolean
+    )
+
     @Query("SELECT COUNT(*) FROM locations")
     suspend fun count(): Int
 

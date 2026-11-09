@@ -36,6 +36,11 @@ data class CharacterDetailsRoute(
 )
 
 @Serializable
+data class CharacterFormRoute(
+    val characterId: Int
+)
+
+@Serializable
 object LocationsGraph
 
 @Serializable
@@ -160,6 +165,7 @@ fun AppNavigation(
             composable<Login> {
                 LoginScreen(
                     isSyncing = sessionUiState.isSyncing,
+                    syncError = sessionUiState.syncError,
                     onLogin = { name ->
                         sessionViewModel.login(
                             name = name,
@@ -188,15 +194,30 @@ fun AppNavigation(
                                     characterId = characterId
                                 )
                             )
+                        },
+                        onCreateCharacter = {
+                            navController.navigate(
+                                CharacterFormRoute(characterId = 0)
+                            )
                         }
                     )
                 }
 
                 composable<CharacterDetailsRoute> {
                     CharacterDetailsScreen(
-                        onBack = {
-                            navController.navigateUp()
+                        onBack = { navController.navigateUp() },
+                        onEditCharacter = { characterId ->
+                            navController.navigate(
+                                CharacterFormRoute(characterId = characterId)
+                            )
                         }
+                    )
+                }
+
+                composable<CharacterFormRoute> {
+                    CharacterFormScreen(
+                        onBack = { navController.navigateUp() },
+                        onSaved = { navController.navigateUp() }
                     )
                 }
             }

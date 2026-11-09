@@ -5,8 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.example.myapplication.data.local.AppDatabase
-import com.example.myapplication.data.local.toModel
+import com.example.myapplication.data.repository.CharacterRepository
 import com.example.myapplication.db.Character
 import com.example.myapplication.ui.CharacterDetailsRoute
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,8 +26,7 @@ class CharacterDetailsViewModel(
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
 
-    private val characterDao =
-        AppDatabase.getDatabase(application).characterDao()
+    private val repository = CharacterRepository(application)
 
     private val characterId =
         savedStateHandle.toRoute<CharacterDetailsRoute>().characterId
@@ -42,7 +40,7 @@ class CharacterDetailsViewModel(
 
     private fun observeCharacter() {
         viewModelScope.launch {
-            characterDao.getCharacterById(characterId)
+            repository.observeCharacter(characterId)
                 .catch {
                     _uiState.update { current ->
                         current.copy(
@@ -51,8 +49,8 @@ class CharacterDetailsViewModel(
                         )
                     }
                 }
-                .collect { entity ->
-                    if (entity == null) {
+                .collect { character ->
+                    if (character == null) {
                         _uiState.update { current ->
                             current.copy(
                                 isLoading = false,
@@ -64,7 +62,7 @@ class CharacterDetailsViewModel(
                         _uiState.update { current ->
                             current.copy(
                                 isLoading = false,
-                                data = entity.toModel(),
+                                data = character,
                                 hasError = false
                             )
                         }
@@ -75,10 +73,14 @@ class CharacterDetailsViewModel(
 
     fun toggleFavorite(character: Character) {
         viewModelScope.launch {
-            characterDao.updateFavorite(
-                characterId = character.id,
-                isFavorite = !character.isFavorite
-            )
+            repository.toggleFavorite(character)
+        }
+    }
+
+    fun deleteCharacter(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            repository.deleteCharacter(characterId)
+            onDeleted()
         }
     }
 

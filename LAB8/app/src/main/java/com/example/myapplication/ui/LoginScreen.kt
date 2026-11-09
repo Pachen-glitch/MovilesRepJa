@@ -28,6 +28,7 @@ import com.example.myapplication.R
 @Composable
 fun LoginScreen(
     isSyncing: Boolean,
+    syncError: String?,
     onLogin: (String) -> Unit
 ) {
     var name by rememberSaveable {
@@ -74,6 +75,15 @@ fun LoginScreen(
                 text = "Sincronizando datos...",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        syncError?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 

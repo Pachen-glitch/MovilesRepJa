@@ -5,8 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.example.myapplication.data.local.AppDatabase
-import com.example.myapplication.data.local.toModel
+import com.example.myapplication.data.repository.LocationRepository
 import com.example.myapplication.db.Location
 import com.example.myapplication.ui.LocationDetailsRoute
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,8 +26,7 @@ class LocationDetailsViewModel(
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
 
-    private val locationDao =
-        AppDatabase.getDatabase(application).locationDao()
+    private val repository = LocationRepository(application)
 
     private val locationId =
         savedStateHandle.toRoute<LocationDetailsRoute>().locationId
@@ -42,7 +40,7 @@ class LocationDetailsViewModel(
 
     private fun observeLocation() {
         viewModelScope.launch {
-            locationDao.getLocationById(locationId)
+            repository.observeLocation(locationId)
                 .catch {
                     _uiState.update { current ->
                         current.copy(
@@ -51,8 +49,8 @@ class LocationDetailsViewModel(
                         )
                     }
                 }
-                .collect { entity ->
-                    if (entity == null) {
+                .collect { location ->
+                    if (location == null) {
                         _uiState.update { current ->
                             current.copy(
                                 isLoading = false,
@@ -64,12 +62,18 @@ class LocationDetailsViewModel(
                         _uiState.update { current ->
                             current.copy(
                                 isLoading = false,
-                                data = entity.toModel(),
+                                data = location,
                                 hasError = false
                             )
                         }
                     }
                 }
+        }
+    }
+
+    fun toggleFavorite(location: Location) {
+        viewModelScope.launch {
+            repository.toggleFavorite(location)
         }
     }
 

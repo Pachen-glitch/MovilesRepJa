@@ -4,11 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.UserPreferences
-import com.example.myapplication.data.local.AppDatabase
-import com.example.myapplication.data.local.toEntity
-import com.example.myapplication.db.CharacterDb
-import com.example.myapplication.db.LocationDb
-import kotlinx.coroutines.delay
+import com.example.myapplication.data.repository.CharacterRepository
+import com.example.myapplication.data.repository.LocationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +15,8 @@ import kotlinx.coroutines.launch
 data class SessionUiState(
     val isChecking: Boolean = true,
     val userName: String? = null,
-    val isSyncing: Boolean = false
+    val isSyncing: Boolean = false,
+    val syncError: String? = null
 )
 
 class SessionViewModel(
@@ -26,9 +24,8 @@ class SessionViewModel(
 ) : AndroidViewModel(application) {
 
     private val userPreferences = UserPreferences(application)
-    private val database = AppDatabase.getDatabase(application)
-    private val characterDao = database.characterDao()
-    private val locationDao = database.locationDao()
+    private val characterRepository = CharacterRepository(application)
+    private val locationRepository = LocationRepository(application)
 
     private val _uiState = MutableStateFlow(SessionUiState())
     val uiState: StateFlow<SessionUiState> = _uiState.asStateFlow()
@@ -61,36 +58,35 @@ class SessionViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSyncing = true) }
-
-            delay(4_000)
-
-            if (characterDao.count() == 0) {
-                val characters = CharacterDb()
-                    .getAllCharacters()
-                    .map { it.toEntity() }
-                characterDao.insertAll(characters)
+            _uiState.update {
+                it.copy(
+                    isSyncing = true,
+                    syncError = null
+                )
             }
 
-            if (locationDao.count() == 0) {
-                val locations = LocationDb()
-                    .getAllLocations()
-                    .map { it.toEntity() }
-                locationDao.insertAll(locations)
+            try {
+                characterRepository.syncFromApiIfEmpty()
+                locationRepository.syncFromApiIfEmpty()
+                userPreferences.saveName(cleanName)
+                _uiState.update { it.copy(isSyncing = false) }
+                onSuccess()
+            } catch (exception: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isSyncing = false,
+                        syncError = "No se pudo sincronizar. Verifica tu conexión a internet."
+                    )
+                }
             }
-
-            userPreferences.saveName(cleanName)
-
-            _uiState.update { it.copy(isSyncing = false) }
-            onSuccess()
         }
     }
 
     fun logout(onSuccess: () -> Unit) {
         viewModelScope.launch {
             userPreferences.clearName()
-            characterDao.deleteAll()
-            locationDao.deleteAll()
+            characterRepository.clearAll()
+            locationRepository.clearAll()
             onSuccess()
         }
     }
