@@ -72,7 +72,7 @@ fun LoginScreen(
             )
 
             Text(
-                text = "Sincronizando datos...",
+                text = "Sincronizando datos... puede tardar un minuto.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

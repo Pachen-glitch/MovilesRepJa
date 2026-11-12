@@ -8,6 +8,7 @@ import com.example.myapplication.data.local.toModel
 import com.example.myapplication.data.remote.RickMortyApi
 import com.example.myapplication.db.Character
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -15,7 +16,7 @@ import kotlinx.coroutines.withContext
 class CharacterRepository(context: Context) {
 
     private val characterDao = AppDatabase.getDatabase(context).characterDao()
-    private val api = RickMortyApi.create()
+    private val api by lazy { RickMortyApi.create() }
 
     fun observeCharacters(): Flow<List<Character>> {
         return characterDao.getAllCharacters().map { entities ->
@@ -46,6 +47,9 @@ class CharacterRepository(context: Context) {
             allCharacters.addAll(response.results.map { it.toEntity() })
             totalPages = response.info.pages
             page++
+            if (page <= totalPages) {
+                delay(PAGE_DELAY_MS)
+            }
         } while (page <= totalPages)
 
         characterDao.insertAll(allCharacters)
@@ -88,5 +92,9 @@ class CharacterRepository(context: Context) {
 
     suspend fun clearAll() {
         characterDao.deleteAll()
+    }
+
+    private companion object {
+        const val PAGE_DELAY_MS = 600L
     }
 }

@@ -1,34 +1,52 @@
 package com.example.myapplication.data.remote
 
-import com.example.myapplication.data.remote.dto.CharacterDto
-import com.example.myapplication.data.remote.dto.LocationDto
-import com.example.myapplication.data.remote.dto.PagedResponse
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
+import com.example.myapplication.data.remote.dto.CharacterPageResponse
+import com.example.myapplication.data.remote.dto.LocationPageResponse
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.delay
 
-interface RickMortyApi {
+class RickMortyApi {
 
-    @GET("character")
-    suspend fun getCharacters(
-        @Query("page") page: Int
-    ): PagedResponse<CharacterDto>
+    private val httpClient: HttpClient by lazy { RickMortyHttpClient.client }
 
-    @GET("location")
-    suspend fun getLocations(
-        @Query("page") page: Int
-    ): PagedResponse<LocationDto>
+    suspend fun getCharacters(page: Int): CharacterPageResponse {
+        return withRateLimitRetry {
+            httpClient.get("${RickMortyHttpClient.BASE_URL}character") {
+                parameter("page", page)
+            }.body()
+        }
+    }
+
+    suspend fun getLocations(page: Int): LocationPageResponse {
+        return withRateLimitRetry {
+            httpClient.get("${RickMortyHttpClient.BASE_URL}location") {
+                parameter("page", page)
+            }.body()
+        }
+    }
+
+    private suspend fun <T> withRateLimitRetry(request: suspend () -> T): T {
+        var attempt = 0
+        while (true) {
+            try {
+                return request()
+            } catch (exception: ClientRequestException) {
+                val rateLimited = exception.response.status == HttpStatusCode.TooManyRequests
+                if (!rateLimited || attempt >= 4) {
+                    throw exception
+                }
+                attempt++
+                delay(35_000L)
+            }
+        }
+    }
 
     companion object {
-        private const val BASE_URL = "https://rickandmortyapi.com/api/"
-
-        fun create(): RickMortyApi {
-            return Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(RickMortyApi::class.java)
-        }
+        fun create(): RickMortyApi = RickMortyApi()
     }
 }

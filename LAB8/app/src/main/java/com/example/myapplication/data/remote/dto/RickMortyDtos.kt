@@ -1,17 +1,22 @@
 package com.example.myapplication.data.remote.dto
 
-data class PagedResponse<T>(
-    val info: PageInfo,
-    val results: List<T>
-)
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class PageInfo(
     val count: Int,
     val pages: Int,
-    val next: String?,
-    val prev: String?
+    val next: String? = null,
+    val prev: String? = null
 )
 
+@Serializable
+data class CharacterPageResponse(
+    val info: PageInfo,
+    val results: List<CharacterDto>
+)
+
+@Serializable
 data class CharacterDto(
     val id: Int,
     val name: String,
@@ -21,6 +26,13 @@ data class CharacterDto(
     val image: String
 )
 
+@Serializable
+data class LocationPageResponse(
+    val info: PageInfo,
+    val results: List<LocationDto>
+)
+
+@Serializable
 data class LocationDto(
     val id: Int,
     val name: String,

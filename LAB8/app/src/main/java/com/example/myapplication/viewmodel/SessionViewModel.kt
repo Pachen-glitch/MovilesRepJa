@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.myapplication.UserPreferences
 import com.example.myapplication.data.repository.CharacterRepository
 import com.example.myapplication.data.repository.LocationRepository
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 data class SessionUiState(
@@ -71,11 +73,14 @@ class SessionViewModel(
                 userPreferences.saveName(cleanName)
                 _uiState.update { it.copy(isSyncing = false) }
                 onSuccess()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
+                Log.e("SessionSync", "Fallo al sincronizar", exception)
                 _uiState.update {
                     it.copy(
                         isSyncing = false,
-                        syncError = "No se pudo sincronizar. Verifica tu conexión a internet."
+                        syncError = "No se pudo sincronizar. Espera un momento e inténtalo de nuevo."
                     )
                 }
             }
